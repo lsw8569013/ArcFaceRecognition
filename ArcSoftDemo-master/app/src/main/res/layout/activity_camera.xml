@@ -1,0 +1,33 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true"
+    tools:context="org.zsq.activity.CameraActivity" >
+    <FrameLayout
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+		<org.zsq.camera.CameraSurface
+	         android:id="@+id/camera_surfaceview"
+	         android:layout_width="fill_parent"
+	         android:layout_height="fill_parent" />
+	    
+	    <SurfaceView
+	        android:id="@+id/surfaceView"
+	        android:layout_width="fill_parent"
+	        android:layout_height="fill_parent"
+	        android:layout_marginRight="0dp"
+	        android:layout_marginLeft="0dp"
+	        android:layout_marginBottom="0dp"
+	        android:layout_marginTop="0dp" />
+	</FrameLayout>
+
+	<TextView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Made by zsq"
+		android:layout_alignParentEnd="true"
+		android:layout_alignParentBottom="true"
+		android:textColor="@color/white"/>
+</RelativeLayout>
