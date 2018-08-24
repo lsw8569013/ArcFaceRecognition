@@ -5,6 +5,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
+import android.os.StrictMode;
 import android.util.Log;
 
 /**
@@ -19,8 +21,13 @@ public class Application extends android.app.Application {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		mFaceDB = new FaceDB(this.getExternalCacheDir().getPath());
+		mFaceDB = new FaceDB(getExternalCacheDir().getPath());
 		mImage = null;
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+			StrictMode.setVmPolicy(builder.build());
+		}
 	}
 
 	public void setCaptureImage(Uri uri) {

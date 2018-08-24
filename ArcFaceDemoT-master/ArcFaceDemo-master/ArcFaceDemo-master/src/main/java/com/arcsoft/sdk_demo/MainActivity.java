@@ -57,13 +57,13 @@ public class MainActivity extends Activity implements OnClickListener {
 		if (requestCode == REQUEST_CODE_IMAGE_OP && resultCode == RESULT_OK) {
 			Uri mPath = data.getData();
 			String file = getPath(mPath);
-			Bitmap bmp = Application.decodeImage(file);
-			if (bmp == null || bmp.getWidth() <= 0 || bmp.getHeight() <= 0 ) {
-				Log.e(TAG, "error");
-			} else {
-				Log.i(TAG, "bmp [" + bmp.getWidth() + "," + bmp.getHeight());
-			}
-			startRegister(bmp, file);
+//			Bitmap bmp = Application.decodeImage(file);
+//			if (bmp == null || bmp.getWidth() <= 0 || bmp.getHeight() <= 0 ) {
+//				Log.e(TAG, "error");
+//			} else {
+//				Log.i(TAG, "bmp [" + bmp.getWidth() + "," + bmp.getHeight());
+//			}
+			startRegister(null, file);
 		} else if (requestCode == REQUEST_CODE_OP) {
 			Log.i(TAG, "RESULT =" + resultCode);
 			if (data == null) {
@@ -75,8 +75,8 @@ public class MainActivity extends Activity implements OnClickListener {
 		} else if (requestCode == REQUEST_CODE_IMAGE_CAMERA && resultCode == RESULT_OK) {
 			Uri mPath = ((Application)(MainActivity.this.getApplicationContext())).getCaptureImage();
 			String file = getPath(mPath);
-			Bitmap bmp = Application.decodeImage(file);
-			startRegister(bmp, file);
+//			Bitmap bmp = Application.decodeImage(file);
+			startRegister(null, file);
 		}
 	}
 

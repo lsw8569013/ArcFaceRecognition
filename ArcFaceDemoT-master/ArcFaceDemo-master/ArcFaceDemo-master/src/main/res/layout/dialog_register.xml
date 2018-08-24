@@ -4,10 +4,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-    <com.guo.android_extend.widget.ExtImageView
+    <ImageView
         android:id="@+id/extimageview"
         android:layout_width="128dp"
         android:layout_height="128dp"
+        android:scaleType="fitXY"
         android:layout_centerHorizontal="true"/>
 
     <EditText
@@ -19,4 +20,5 @@
         android:layout_below="@+id/extimageview"
         android:layout_marginTop="16dp"
         android:hint="输入名字"/>
+
 </RelativeLayout>

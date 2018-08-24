@@ -38,6 +38,7 @@ public class FaceDB {
 	boolean mUpgrade;
 
 	class FaceRegist {
+		String mHeadpath;
 		String mName;
 		List<AFR_FSDKFace> mFaceList;
 
@@ -48,6 +49,10 @@ public class FaceDB {
 	}
 
 	public FaceDB(String path) {
+		File file = new File(path);
+		if(!file.exists() ){
+			file.mkdirs();
+		}
 		mDBPath = path;
 		mRegister = new ArrayList<>();
 		mFRVersion = new AFR_FSDKVersion();
@@ -100,7 +105,8 @@ public class FaceDB {
 			if (version_saved != null) {
 				for (String name = bos.readString(); name != null; name = bos.readString()){
 					if (new File(mDBPath + "/" + name + ".data").exists()) {
-						mRegister.add(new FaceRegist(new String(name)));
+						String[] split = name.split("=");
+						mRegister.add(new FaceRegist(name));
 					}
 				}
 			}
@@ -146,7 +152,7 @@ public class FaceDB {
 		return false;
 	}
 
-	public	void addFace(String name, AFR_FSDKFace face) {
+	public	void addFace(String name, AFR_FSDKFace face, String headImageFilePath) {
 		try {
 			//check if already registered.
 			boolean add = true;
@@ -169,6 +175,7 @@ public class FaceDB {
 				ExtOutputStream bos = new ExtOutputStream(fs);
 				for (FaceRegist frface : mRegister) {
 					bos.writeString(frface.mName);
+					Log.e("lsw",frface.mName+"="+frface.mHeadpath);
 				}
 				bos.close();
 				fs.close();

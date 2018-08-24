@@ -373,6 +373,7 @@ public class DetecterActivity extends Activity implements OnCameraListener, View
 
 	@Override
 	public void onAfterRender(CameraFrameData data) {
+	    // 圈出 识别到的人脸边框
 		mGLSurfaceView.getGLES2Render().draw_rect((Rect[])data.getParams(), Color.GREEN, 2);
 	}
 
@@ -385,8 +386,10 @@ public class DetecterActivity extends Activity implements OnCameraListener, View
 	@Override
 	public void onAutoFocus(boolean success, Camera camera) {
 		if (success) {
+		    // 手动对焦 成功 回调
 			Log.d(TAG, "Camera Focus SUCCESS!");
 		}
+
 	}
 
 	@Override

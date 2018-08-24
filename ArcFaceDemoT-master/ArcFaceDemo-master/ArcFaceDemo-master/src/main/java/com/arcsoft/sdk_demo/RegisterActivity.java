@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -12,6 +13,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Message;
 import android.text.InputFilter;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
@@ -21,6 +23,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,11 +36,15 @@ import com.arcsoft.facerecognition.AFR_FSDKError;
 import com.arcsoft.facerecognition.AFR_FSDKFace;
 import com.arcsoft.facerecognition.AFR_FSDKVersion;
 import com.guo.android_extend.image.ImageConverter;
-import com.guo.android_extend.widget.ExtImageView;
 import com.guo.android_extend.widget.HListView;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.arcsoft.sdk_demo.Constants.filePath;
 
 /**
  * Created by gqj3375 on 2017/4/27.
@@ -63,7 +70,7 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 	private Rect dst = new Rect();
 	private Thread view;
 	private EditText mEditText;
-	private ExtImageView mExtImageView;
+	private ImageView mExtImageView;
 	private HListView mHListView;
 	private RegisterViewAdapter mRegisterViewAdapter;
 	private AFR_FSDKFace mAFR_FSDKFace;
@@ -147,10 +154,12 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 							dst.right = dst.left + (int)(src.width() * scale);
 							dst.bottom = dst.top + canvas.getHeight();
 						}
+
 						canvas.drawBitmap(mBitmap, src, dst, mPaint);
 						canvas.save();
 						canvas.scale((float) dst.width() / (float) src.width(), (float) dst.height() / (float) src.height());
 						canvas.translate(dst.left / scale, dst.top / scale);
+						// 红框 圈出识别到的头像
 						for (AFD_FSDKFace face : result) {
 							mPaint.setColor(Color.RED);
 							mPaint.setStrokeWidth(10.0f);
@@ -184,6 +193,7 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 						mAFR_FSDKFace = result1.clone();
 						int width = result.get(0).getRect().width();
 						int height = result.get(0).getRect().height();
+						//显示 识别到的人脸信息
 						Bitmap face_bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
 						Canvas face_canvas = new Canvas(face_bitmap);
 						face_canvas.drawBitmap(mBitmap, result.get(0).getRect(), new Rect(0, 0, width, height), null);
@@ -264,19 +274,34 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 					View layout = inflater.inflate(R.layout.dialog_register, null);
 					mEditText = (EditText) layout.findViewById(R.id.editview);
 					mEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(16)});
-					mExtImageView = (ExtImageView) layout.findViewById(R.id.extimageview);
+					mExtImageView = (ImageView) layout.findViewById(R.id.extimageview);
 					mExtImageView.setImageBitmap((Bitmap) msg.obj);
 					final Bitmap face = (Bitmap) msg.obj;
+
 					new AlertDialog.Builder(RegisterActivity.this)
 							.setTitle("请输入注册名字")
-							.setIcon(android.R.drawable.ic_dialog_info)
 							.setView(layout)
 							.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 								@Override
 								public void onClick(DialogInterface dialog, int which) {
-									((Application)RegisterActivity.this.getApplicationContext()).mFaceDB.addFace(mEditText.getText().toString(), mAFR_FSDKFace);
-									mRegisterViewAdapter.notifyDataSetChanged();
-									dialog.dismiss();
+									//保存头像
+									String name = mEditText.getText().toString().trim();
+
+									if(TextUtils.isEmpty(name)){
+										Toast.makeText(RegisterActivity.this,"请输入用户名字",Toast.LENGTH_SHORT).show();
+										return;
+									}
+									//压缩保存图片
+//									getHeadImageFile(name ,dialog);
+									//
+									String headImageFilePath = getHeadImageFilePath(face, name);
+									if( headImageFilePath != null){
+										((Application)RegisterActivity.this.getApplicationContext()).mFaceDB.addFace(name, mAFR_FSDKFace,headImageFilePath);
+										mRegisterViewAdapter.notifyDataSetChanged();
+										dialog.dismiss();
+									}else{
+										Toast.makeText(RegisterActivity.this,"头像图片保存失败！",Toast.LENGTH_SHORT).show();
+									}
 								}
 							})
 							.setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -300,7 +325,7 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 	}
 
 	class Holder {
-		ExtImageView siv;
+		ImageView siv;
 		TextView tv;
 	}
 
@@ -341,7 +366,7 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 			} else {
 				convertView = mLInflater.inflate(R.layout.item_sample, null);
 				holder = new Holder();
-				holder.siv = (ExtImageView) convertView.findViewById(R.id.imageView1);
+				holder.siv = (ImageView) convertView.findViewById(R.id.imageView1);
 				holder.tv = (TextView) convertView.findViewById(R.id.textView1);
 				convertView.setTag(holder);
 			}
@@ -349,7 +374,10 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 			if (!((Application)mContext.getApplicationContext()).mFaceDB.mRegister.isEmpty()) {
 				FaceDB.FaceRegist face = ((Application) mContext.getApplicationContext()).mFaceDB.mRegister.get(position);
 				holder.tv.setText(face.mName);
-				//holder.siv.setImageResource(R.mipmap.ic_launcher);
+				String filePath = Constants.filePath+face.mName+".head";
+				if(new File(filePath).exists()){
+					holder.siv.setImageBitmap(BitmapFactory.decodeFile(filePath));
+				}
 				convertView.setWillNotDraw(false);
 			}
 
@@ -382,4 +410,85 @@ public class RegisterActivity extends Activity implements SurfaceHolder.Callback
 					.show();
 		}
 	}
+
+	/**
+	 * 根据byte数组，生成文件
+	 */
+	public  void getHeadImageFile(final String fileName, final DialogInterface dialog) {
+
+//		if(!new File(mFilePath).exists()){
+//			Toast.makeText(RegisterActivity.this,"图片不存在！",Toast.LENGTH_SHORT).show();
+//		}
+
+//		Luban.with(this)
+//				.load(new File(mFilePath))
+//				.ignoreBy(180)
+//				.setTargetDir(filePath)
+//				.filter(new CompressionPredicate() {
+//					@Override
+//					public boolean apply(String path) {
+//						return !(TextUtils.isEmpty(path) || path.toLowerCase().endsWith(".gif"));
+//					}
+//				})
+//				.setCompressListener(new OnCompressListener() {
+//					@Override
+//					public void onStart() {
+//						//
+//					}
+//
+//					@Override
+//					public void onSuccess(File file) {
+//						//
+//						Log.e("lsw","压缩后的文件 --"+file.getAbsolutePath());
+//						if(file.getAbsolutePath() != null){
+//							((Application)RegisterActivity.this.getApplicationContext()).mFaceDB.addFace(fileName, mAFR_FSDKFace,file.getAbsolutePath());
+//							mRegisterViewAdapter.notifyDataSetChanged();
+//							dialog.dismiss();
+//						}else{
+//							Toast.makeText(RegisterActivity.this,"头像图片保存失败！",Toast.LENGTH_SHORT).show();
+//						}
+//					}
+//
+//					@Override
+//					public void onError(Throwable e) {
+//						//
+//						e.printStackTrace();
+//						Toast.makeText(RegisterActivity.this,"头像图片压缩失败！"+e.getMessage(),Toast.LENGTH_SHORT).show();
+//					}
+//				}).launch();
+
+	}
+
+
+	public String getHeadImageFilePath(final Bitmap bitmap, String fileName) {
+
+		File filePic = null;
+		FileOutputStream fos = null;
+
+		try {
+			File dir = new File(filePath);
+			if(!dir.exists()){//判断文件目录是否存在
+				dir.mkdirs();
+			}
+			filePic = new File(filePath + fileName + ".head");
+			Log.e("lsw",filePic.getAbsolutePath());
+			fos = new FileOutputStream(filePic);
+			bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+			fos.flush();
+			fos.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			if (fos != null) {
+				try {
+					fos.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		}
+		return filePic.getAbsolutePath();
+	}
+
 }
