@@ -8,4 +8,7 @@
 
 都是在github 下载，调试修改过的，能成功的运行！
 
-参考
+感谢并参考 : https://github.com/asdfqwrasdf/ArcFaceDemo
+
+https://github.com/Sanqi5401/ArcSoftDemo
+
